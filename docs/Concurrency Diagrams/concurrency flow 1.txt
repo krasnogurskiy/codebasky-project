@@ -1,0 +1,24 @@
+title Двоє користувачів одночасно оновлюють одну задачу
+
+actor "Учасник1"
+actor "Учасник2"
+participant "ProjectTaskService" as TaskService
+participant "TaskRepository" as Repo
+participant "NotificationService" as Notify
+participant "WebSocketGateway" as WS
+
+Учасник1->TaskService: Запит на оновлення задачі (статус: In Progress)
+TaskService->Repo: Отримати поточну версію задачі (v1)
+Учасник2->TaskService: Запит на оновлення задачі (статус: Done)
+TaskService->Repo: Отримати поточну версію задачі (v1)
+
+TaskService->Repo: Зберегти оновлення від Учасник1 (v2)
+Repo-->TaskService: Успішно збережено
+TaskService->Notify: Створити подію оновлення задачі
+Notify->WS: Трансляція оновлення всім підписаним клієнтам
+WS->Учасник2: Отримано оновлення (нова версія v2)
+
+TaskService->Repo: Спроба зберегти оновлення від Учасник2 (v1)
+Repo-->TaskService: Відхилено (конфлікт версій)
+TaskService->Notify: Надіслати повідомлення про конфлікт
+Notify->Учасник2: "Задачу вже оновлено іншим користувачем. Оновіть сторінку."
