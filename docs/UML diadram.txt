@@ -1,0 +1,75 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 60
+
+' ---- Актори ----
+actor "Користувач"       as User
+actor "Учасник команди"  as Member
+actor "Менеджер команди" as Manager
+
+' Спадкування ролей:
+' Менеджер є спеціалізацією Учасника,
+' Учасник є спеціалізацією Користувача.
+User <|-- Member
+Member <|-- Manager
+
+' ---- Пакет: Notifications & Analytics ----
+rectangle "Notifications &\nAnalytics" as NA {
+  usecase UC14 as "View dashboard\n(Перегляд дашборду)"
+  usecase UC15 as "Manage notification settings\n(Налаштування сповіщень)"
+  usecase UC13 as "Receive notifications\n(Отримувати сповіщення)"
+}
+
+' ---- Пакет: Task Management System ----
+rectangle "Task Management\nSystem" as TMS {
+  usecase UC3  as "View projects\n(Перегляд проєктів)"
+  usecase UC4  as "View tasks\n(Перегляд задач)"
+  usecase UC12 as "Search & filter\n(Пошук і фільтр)"
+
+  usecase UC5  as "Create task\n(Створити задачу)"
+  usecase UC6  as "Edit task\n(Редагувати задачу)"
+  usecase UC8  as "Change status\n(Змінити статус)"
+  usecase UC9  as "Assign assignee\n(Призначити відповідального)"
+  usecase UC10 as "Add comment\n(Додати коментар)"
+  usecase UC11 as "Attach file\n(Додати вкладення)"
+  usecase UC7  as "Delete task\n(Видалити задачу)"
+}
+
+' ---- Пакет: Account & Access Management ----
+rectangle "Account & Access\nManagement" as AAM {
+  usecase UC1 as "Sign up\n(Реєстрація)"
+  usecase UC2 as "Log in\n(Вхід)"
+}
+
+' ---- Зв'язки акторів з юзкейсами ----
+
+' Базові можливості будь-якого користувача
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC12
+User --> UC13
+
+' Можливості учасника команди
+Member --> UC5
+Member --> UC6
+Member --> UC8
+Member --> UC10
+Member --> UC11
+
+' Можливості менеджера
+Manager --> UC9
+Manager --> UC7
+Manager --> UC14
+Manager --> UC15
+
+' Логічні include-залежності між діями
+UC6 .> UC8 : <<include>>
+UC5 .> UC9 : <<include>>
+
+@enduml
