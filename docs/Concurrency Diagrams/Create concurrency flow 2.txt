@@ -1,0 +1,20 @@
+title Одночасне завантаження вкладень
+
+actor "Учасник1"
+actor "Учасник2"
+participant "AttachmentService" as Attach
+participant "FileStorage" as Storage
+participant "NotificationService" as Notify
+
+Учасник1->Attach: Завантаження файлу (report.pdf)
+Учасник2->Attach: Завантаження файлу (design.png)
+Attach->Storage: Перевірка черги завантаження
+Attach->Storage: Збереження файлу report.pdf
+Storage-->Attach: Файл збережено успішно
+Attach->Notify: Повідомлення про успішне завантаження (report.pdf)
+Notify->Учасник1: "Файл завантажено успішно"
+
+Attach->Storage: Збереження файлу design.png
+Storage-->Attach: Файл збережено успішно
+Attach->Notify: Повідомлення про успішне завантаження (design.png)
+Notify->Учасник2: "Файл завантажено успішно"
