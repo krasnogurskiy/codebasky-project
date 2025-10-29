@@ -1,0 +1,93 @@
+title Загальна Sequence Diagram (Codebasky)
+
+actor "Користувач" as User
+actor "Учасник команди" as Member
+actor "Менеджер команди" as Manager
+
+participant "Frontend (SPA)" as FE
+participant "IdentityService" as ID
+participant "TaskService" as TS
+participant "CollaborationService" as CS
+participant "AnalyticsService" as AS
+participant "NotificationService" as Notify
+participant "WebSocketGW" as WS
+participant "EventBus" as Bus
+participant "PostgresDB" as DB
+
+par [1] Логін / Реєстрація
+    User->FE: Вводить email і пароль / форму реєстрації
+    FE->ID: /auth/login або /auth/register
+
+    alt Логін
+        ID->DB: Перевірка користувача (email, пароль)
+        DB-->ID: Користувач знайдений
+        alt Пароль валідний
+            ID-->FE: 200 {access_token}
+            FE-->User: Доступ до робочого простору
+        else Пароль невалідний
+            ID-->FE: 401 Unauthorized
+            FE-->User: Помилка входу
+        end
+    else Реєстрація
+        ID->DB: Створити нового користувача
+        DB-->ID: OK (userId)
+        ID-->FE: 201 Created (очікує підтвердження email)
+        FE-->User: Повідомлення "перевірте пошту"
+    end
+
+else [2] Створення проєкту (менеджер)
+    Manager->FE: Натискає "Створити проєкт"
+    FE->TS: POST /projects {name, desc} з токеном
+    TS->ID: Перевірити права (чи Manager)
+    alt Має право
+        TS->DB: INSERT Project
+        DB-->TS: OK (projectId)
+        TS-->FE: 201 Created {projectId}
+        FE-->Manager: Новий проєкт доступний
+    else Немає прав
+        TS-->FE: 403 Forbidden
+        FE-->Manager: "Недостатньо прав"
+    end
+
+else [3] Створення задачі і призначення виконавця
+    Member->FE: Створити задачу (title, desc, assignee, due)
+    FE->TS: POST /projects/{id}/tasks {...}
+    TS->DB: INSERT Task
+    DB-->TS: OK (taskId)
+
+    TS->Bus: Publish TaskCreated(taskId)
+    TS->Bus: Publish TaskAssigned(assigneeId, taskId)
+
+    TS-->FE: 201 Created {taskId}
+    FE-->Member: Задача з'явилась у проєкті
+
+    Bus->Notify: Подія TaskAssigned
+    Notify->Member: In-app сповіщення (ти призначений)
+    Notify->WS: Push оновлення в реальному часі
+
+else [4] Оновлення задачі та обговорення
+    Member->FE: Змінює статус задачі ("In Progress" / "Done")
+    FE->TS: PATCH /tasks/{taskId} {status}
+    TS->DB: UPDATE Task.status
+    DB-->TS: OK
+    TS->WS: Push task.updated всім підписаним
+    TS-->FE: 200 OK
+    FE-->Member: Статус оновлено
+
+    Member->FE: Додає коментар до задачі
+    FE->CS: POST /tasks/{taskId}/comments {text, @mentions}
+    CS->DB: INSERT Comment
+    DB-->CS: OK (commentId)
+    CS->Bus: Publish CommentAdded(taskId, mentions)
+    CS->WS: Push comment.added всім підписаним
+    CS-->FE: 201 Created
+    FE-->Member: Коментар відображено
+
+else [5] Перегляд прогресу команди (дашборд)
+    Manager->FE: Відкрити дашборд проєкту
+    FE->AS: GET /analytics/projects/{id}/summary
+    AS->DB: SELECT агреговані метрики (відкриті задачі, прострочені, завершені)
+    DB-->AS: Дані метрик
+    AS-->FE: 200 {metrics}
+    FE-->Manager: Показати прогрес команди
+end
