@@ -1,0 +1,18 @@
+title Одночасне редагування коментарів
+
+actor "Учасник1"
+actor "Учасник2"
+participant "CollaborationService" as Collab
+participant "CommentRepository" as Repo
+participant "WebSocketGateway" as WS
+
+Учасник1->Collab: Оновлення існуючого коментаря
+Collab->Repo: Отримати поточну версію коментаря
+Учасник2->Collab: Додавання нового коментаря
+Collab->Repo: Зберегти новий коментар
+
+Collab->Repo: Зберегти оновлення від Учасник1
+Repo-->Collab: Успішно збережено
+Collab->WS: Трансляція оновлень усім підписаним клієнтам
+WS->Учасник1: "Ваш коментар оновлено"
+WS->Учасник2: "Новий коментар збережено"
