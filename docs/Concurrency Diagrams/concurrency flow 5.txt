@@ -1,0 +1,18 @@
+title Одночасне видалення проєкту і створення задачі
+
+actor "Менеджер"
+actor "Учасник"
+participant "ProjectService" as Project
+participant "ProjectTaskService" as TaskService
+participant "NotificationService" as Notify
+
+Менеджер->Project: Запит на видалення проєкту
+Project->Project: Блокування стану проєкту
+Учасник->TaskService: Створення нової задачі у тому ж проєкті
+TaskService->Project: Перевірка стану проєкту
+Project-->TaskService: "Project not found / locked"
+
+TaskService->Notify: Повідомлення про помилку створення задачі
+Notify->Учасник: "Проєкт видалено або недоступний"
+Project->Notify: Сповіщення про успішне видалення
+Notify->Менеджер: "Проєкт успішно видалено"
