@@ -1,0 +1,19 @@
+title Масове оновлення задач під час пікового навантаження
+
+actor "Менеджер1"
+actor "Менеджер2"
+participant "ProjectTaskService" as TaskService
+participant "NotificationService" as Notify
+participant "WebSocketGateway" as WS
+
+Менеджер1->TaskService: Оновити статус 20 задач ("Done")
+Менеджер2->TaskService: Оновити статус 15 задач ("In Progress")
+
+TaskService->TaskService: Асинхронна обробка (черга оновлень)
+TaskService->Notify: Події оновлень передані до черги
+Notify->WS: Трансляція результатів у реальному часі
+WS->Менеджер1: "20 задач оновлено успішно"
+WS->Менеджер2: "15 задач оновлено успішно"
+
+Notify->WS: Оновлення для інших користувачів команди
+WS->Учасники: "Стан задач оновлено"
