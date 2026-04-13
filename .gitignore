@@ -1,0 +1,15 @@
+backend/.vs/
+backend/**/bin/
+backend/**/obj/
+frontend/node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
+docs/06-testing/*.html
+docs/06-testing/*.docx
+tools/
+*.db
+*.db-shm
+*.db-wal
+*.user
+*.suo
